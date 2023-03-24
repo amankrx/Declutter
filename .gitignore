@@ -9,3 +9,12 @@ src/config.rs
 *.ui~
 .flatpak/
 vendor
+/subprojects/blueprint-compiler
+app
+.flatpak-builder
+.vscode/settings.json
+target
+po/*.pot
+.idea
+.direnv
+*.compiled
