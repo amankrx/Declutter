@@ -1,9 +1,9 @@
 use gettextrs::gettext;
 use log::{debug, info};
 
+use adw::subclass::prelude::*;
 use gtk::prelude::*;
-use gtk::subclass::prelude::*;
-use gtk::{gdk, gio, glib};
+use gtk::{gio, glib};
 
 use crate::config::{APP_ID, PKGDATADIR, PROFILE, VERSION};
 use crate::window::ExampleApplicationWindow;
@@ -22,7 +22,7 @@ mod imp {
     impl ObjectSubclass for ExampleApplication {
         const NAME: &'static str = "ExampleApplication";
         type Type = super::ExampleApplication;
-        type ParentType = gtk::Application;
+        type ParentType = adw::Application;
     }
 
     impl ObjectImpl for ExampleApplication {}
@@ -31,7 +31,7 @@ mod imp {
         fn activate(&self) {
             debug!("GtkApplication<ExampleApplication>::activate");
             self.parent_activate();
-            let app = self.instance();
+            let app = self.obj();
 
             if let Some(window) = self.window.get() {
                 let window = window.upgrade().unwrap();
@@ -39,7 +39,7 @@ mod imp {
                 return;
             }
 
-            let window = ExampleApplicationWindow::new(&*app);
+            let window = ExampleApplicationWindow::new(&app);
             self.window
                 .set(window.downgrade())
                 .expect("Window already set.");
@@ -50,23 +50,23 @@ mod imp {
         fn startup(&self) {
             debug!("GtkApplication<ExampleApplication>::startup");
             self.parent_startup();
-            let app = self.instance();
+            let app = self.obj();
 
             // Set icons for shell
             gtk::Window::set_default_icon_name(APP_ID);
 
-            app.setup_css();
             app.setup_gactions();
             app.setup_accels();
         }
     }
 
     impl GtkApplicationImpl for ExampleApplication {}
+    impl AdwApplicationImpl for ExampleApplication {}
 }
 
 glib::wrapper! {
     pub struct ExampleApplication(ObjectSubclass<imp::ExampleApplication>)
-        @extends gio::Application, gtk::Application,
+        @extends gio::Application, gtk::Application, adw::Application,
         @implements gio::ActionMap, gio::ActionGroup;
 }
 
@@ -91,26 +91,13 @@ impl ExampleApplication {
                 app.show_about_dialog();
             })
             .build();
-        self.add_action_entries([action_quit, action_about])
-            .unwrap();
+        self.add_action_entries([action_quit, action_about]);
     }
 
     // Sets up keyboard shortcuts
     fn setup_accels(&self) {
         self.set_accels_for_action("app.quit", &["<Control>q"]);
         self.set_accels_for_action("window.close", &["<Control>w"]);
-    }
-
-    fn setup_css(&self) {
-        let provider = gtk::CssProvider::new();
-        provider.load_from_resource("/com/amankrx/Declutter/style.css");
-        if let Some(display) = gdk::Display::default() {
-            gtk::StyleContext::add_provider_for_display(
-                &display,
-                &provider,
-                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
-            );
-        }
     }
 
     fn show_about_dialog(&self) {
@@ -122,30 +109,29 @@ impl ExampleApplication {
             // .website("https://gitlab.gnome.org/bilelmoussaoui/declutter/")
             .version(VERSION)
             .transient_for(&self.main_window())
-            .translator_credits(&gettext("translator-credits"))
+            .translator_credits(gettext("translator-credits"))
             .modal(true)
-            .authors(vec!["Aman Kumar".into()])
-            .artists(vec!["Aman Kumar".into()])
+            .authors(vec!["Aman Kumar"])
+            .artists(vec!["Aman Kumar"])
             .build();
 
         dialog.present();
     }
 
-    pub fn run(&self) {
+    pub fn run(&self) -> glib::ExitCode {
         info!("Declutter ({})", APP_ID);
         info!("Version: {} ({})", VERSION, PROFILE);
         info!("Datadir: {}", PKGDATADIR);
 
-        ApplicationExtManual::run(self);
+        ApplicationExtManual::run(self)
     }
 }
 
 impl Default for ExampleApplication {
     fn default() -> Self {
-        glib::Object::new::<Self>(&[
-            ("application-id", &APP_ID),
-            ("flags", &gio::ApplicationFlags::empty()),
-            ("resource-base-path", &"/com/amankrx/Declutter/"),
-        ])
+        glib::Object::builder()
+            .property("application-id", APP_ID)
+            .property("resource-base-path", "/com/amankrx/Declutter/")
+            .build()
     }
 }
