@@ -1,13 +1,12 @@
-mod application;
 #[rustfmt::skip]
 mod config;
-mod window;
 
 use gettextrs::{gettext, LocaleCategory};
 use gtk::{gio, glib};
 
-use self::application::ExampleApplication;
 use self::config::{GETTEXT_PACKAGE, LOCALEDIR, RESOURCES_FILE};
+
+use libdeclutter::core::{ i18n, Application };
 
 fn main() -> glib::ExitCode {
     // Initialize logger
@@ -23,6 +22,6 @@ fn main() -> glib::ExitCode {
     let res = gio::Resource::load(RESOURCES_FILE).expect("Could not load gresource file");
     gio::resources_register(&res);
 
-    let app = ExampleApplication::default();
+    let app = Application::default();
     app.run()
 }
