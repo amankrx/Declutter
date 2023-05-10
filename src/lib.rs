@@ -76,7 +76,7 @@
 #![warn(clippy::trivially_copy_pass_by_ref)]
 pub mod config;
 pub mod core;
-pub mod model;
+pub mod models;
 pub mod views;
 pub mod widgets;
 pub mod windows;

@@ -1,5 +1,6 @@
 subdir('icons')
-subdir('resources')
+subdir('tracker')
+
 # Desktop file
 desktop_conf = configuration_data()
 desktop_conf.set('icon', application_id)
@@ -74,3 +75,24 @@ if glib_compile_schemas.found()
     ],
   )
 endif
+
+# Resources
+blueprints = custom_target('blueprints',
+  input: files(
+    'ui/shortcuts.blp',
+    'ui/window.blp',
+  ),
+  output: '.',
+  command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
+)
+
+
+resources = gnome.compile_resources(
+  'resources',
+  'resources.gresource.xml',
+  gresource_bundle: true,
+  source_dir: meson.current_build_dir(),
+  install: true,
+  install_dir: pkgdatadir,
+  dependencies: blueprints,
+)
