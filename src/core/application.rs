@@ -21,12 +21,12 @@ use log::{debug, info};
 
 use adw::subclass::prelude::*;
 use gtk::prelude::*;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 
 use crate::{
     config::{APP_ID, PKGDATADIR, PROFILE, VERSION},
     core::i18n,
-    windows::ApplicationWindow,
+    windows::Window,
 };
 
 mod imp {
@@ -36,7 +36,7 @@ mod imp {
 
     #[derive(Debug, Default)]
     pub struct Application {
-        pub window: OnceCell<WeakRef<ApplicationWindow>>,
+        pub window: OnceCell<WeakRef<Window>>,
     }
 
     #[glib::object_subclass]
@@ -60,7 +60,7 @@ mod imp {
                 return;
             }
 
-            let window = ApplicationWindow::new(&app);
+            let window = Window::new(&app);
             self.window
                 .set(window.downgrade())
                 .expect("Window already set.");
@@ -76,6 +76,7 @@ mod imp {
             // Set icons for shell
             gtk::Window::set_default_icon_name(APP_ID);
 
+            app.setup_css();
             app.setup_gactions();
             app.setup_accels();
         }
@@ -92,7 +93,7 @@ glib::wrapper! {
 }
 
 impl Application {
-    fn main_window(&self) -> ApplicationWindow {
+    fn main_window(&self) -> Window {
         self.imp().window.get().unwrap().upgrade().unwrap()
     }
 
@@ -119,6 +120,18 @@ impl Application {
     fn setup_accels(&self) {
         self.set_accels_for_action("app.quit", &["<Control>q"]);
         self.set_accels_for_action("window.close", &["<Control>w"]);
+    }
+
+    fn setup_css(&self) {
+        let provider = gtk::CssProvider::new();
+        provider.load_from_resource("/com/amankrx/Declutter/style.css");
+        if let Some(display) = gdk::Display::default() {
+            gtk::style_context_add_provider_for_display(
+                &display,
+                &provider,
+                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+            );
+        }
     }
 
     fn show_about_dialog(&self) {

@@ -1,4 +1,4 @@
-# Resources
+# Blueprints
 blueprints = custom_target('blueprints',
   input: files(
     'ui/shortcuts.blp',
@@ -8,7 +8,7 @@ blueprints = custom_target('blueprints',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
 )
 
-
+# Resources
 resources = gnome.compile_resources(
   'resources',
   'resources.gresource.xml',
@@ -18,4 +18,3 @@ resources = gnome.compile_resources(
   install_dir: pkgdatadir,
   dependencies: blueprints,
 )
-subdir('tracker')

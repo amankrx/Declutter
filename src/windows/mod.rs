@@ -2,4 +2,4 @@
 pub mod window;
 
 #[doc(inline)]
-pub use window::ApplicationWindow;
+pub use window::*;

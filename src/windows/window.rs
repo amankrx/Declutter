@@ -10,13 +10,13 @@ mod imp {
 
     #[derive(Debug, gtk::CompositeTemplate)]
     #[template(resource = "/com/amankrx/Declutter/ui/window.ui")]
-    pub struct ApplicationWindow {
+    pub struct Window {
         #[template_child]
         pub headerbar: TemplateChild<adw::HeaderBar>,
         pub settings: gio::Settings,
     }
 
-    impl Default for ApplicationWindow {
+    impl Default for Window {
         fn default() -> Self {
             Self {
                 headerbar: TemplateChild::default(),
@@ -26,9 +26,9 @@ mod imp {
     }
 
     #[glib::object_subclass]
-    impl ObjectSubclass for ApplicationWindow {
-        const NAME: &'static str = "ApplicationWindow";
-        type Type = super::ApplicationWindow;
+    impl ObjectSubclass for Window {
+        const NAME: &'static str = "Window";
+        type Type = super::Window;
         type ParentType = adw::ApplicationWindow;
 
         fn class_init(klass: &mut Self::Class) {
@@ -41,7 +41,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for ApplicationWindow {
+    impl ObjectImpl for Window {
         fn constructed(&self) {
             self.parent_constructed();
             let obj = self.obj();
@@ -56,8 +56,8 @@ mod imp {
         }
     }
 
-    impl WidgetImpl for ApplicationWindow {}
-    impl WindowImpl for ApplicationWindow {
+    impl WidgetImpl for Window {}
+    impl WindowImpl for Window {
         // Save window state on delete event
         fn close_request(&self) -> gtk::Inhibit {
             if let Err(err) = self.obj().save_window_size() {
@@ -69,17 +69,17 @@ mod imp {
         }
     }
 
-    impl ApplicationWindowImpl for ApplicationWindow {}
-    impl AdwApplicationWindowImpl for ApplicationWindow {}
+    impl ApplicationWindowImpl for Window {}
+    impl AdwApplicationWindowImpl for Window {}
 }
 
 glib::wrapper! {
-    pub struct ApplicationWindow(ObjectSubclass<imp::ApplicationWindow>)
+    pub struct Window(ObjectSubclass<imp::Window>)
         @extends gtk::Widget, gtk::Window, gtk::ApplicationWindow,
         @implements gio::ActionMap, gio::ActionGroup, gtk::Root;
 }
 
-impl ApplicationWindow {
+impl Window {
     pub fn new(app: &Application) -> Self {
         glib::Object::builder().property("application", app).build()
     }

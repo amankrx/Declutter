@@ -76,13 +76,13 @@
 #![warn(clippy::trivially_copy_pass_by_ref)]
 pub mod config;
 pub mod core;
-pub mod models;
-pub mod views;
-pub mod widgets;
+// pub mod models;
+// pub mod views;
+// pub mod widgets;
 pub mod windows;
 
 pub mod prelude {
-    use anyhow::Result;
+    // use anyhow::Result;
     pub use gtk::{gdk, gio, glib};
-    use std::{future::Future, pin::Pin};
+    // use std::{future::Future, pin::Pin};
 }
