@@ -16,12 +16,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use gettextrs::gettext;
-use log::{debug, info};
-
 use adw::subclass::prelude::*;
+
+use gettextrs::gettext;
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
+use log::{debug, info};
 
 use crate::{
     config::{APP_ID, PKGDATADIR, PROFILE, VERSION},
