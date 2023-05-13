@@ -34,6 +34,10 @@ fn main() -> glib::ExitCode {
 
     let res = gio::Resource::load(config::RESOURCES_FILE).expect("Could not load gresource file");
     gio::resources_register(&res);
+    println!(
+        "DATABASE_URL=/home/aman/.var/app/com.amankrx.Declutter.Devel/data/declutter.db diesel migration run {:?}",
+        gtk::glib::user_data_dir()
+    );
 
     let app = Application::default();
     app.run()

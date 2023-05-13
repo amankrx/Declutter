@@ -1,7 +1,8 @@
 #[doc(hidden)]
 pub mod application;
-#[doc(hidden)]
 pub mod database;
+#[doc(hidden)]
+pub mod date;
 pub mod i18n;
 
 #[doc(inline)]

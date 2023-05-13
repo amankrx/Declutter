@@ -30,13 +30,13 @@ static POOL: Lazy<Pool> = Lazy::new(|| init_pool().expect("Failed to create a po
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
-pub(crate) fn connection() -> Pool {
+pub fn connection() -> Pool {
     POOL.clone()
 }
 
 fn init_pool() -> Result<Pool> {
     fs::create_dir_all(&*DB_PATH)?;
-    let db_path = DB_PATH.join("authenticator.db");
+    let db_path = DB_PATH.join("declutter.db");
     if !db_path.exists() {
         File::create(&db_path)?;
     }
@@ -51,20 +51,4 @@ fn init_pool() -> Result<Pool> {
     }
     tracing::info!("Database pool initialized.");
     Ok(pool)
-}
-
-pub(crate) fn run_migrations() -> Result<()> {
-    let mut db = connection().get()?;
-    db.run_pending_migrations(MIGRATIONS)
-        .expect("Failed to run migrations");
-    Ok(())
-}
-
-pub(crate) fn reset_database() -> Result<()> {
-    let db_path = DB_PATH.join("authenticator.db");
-    if db_path.exists() {
-        fs::remove_file(&db_path)?;
-    }
-    init_pool()?;
-    Ok(())
 }
