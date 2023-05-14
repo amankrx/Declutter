@@ -17,7 +17,6 @@ use gtk::{gio, glib};
 use libdeclutter::{
     config,
     core::{i18n, Application},
-    models::User,
 };
 
 fn main() -> glib::ExitCode {
@@ -31,28 +30,9 @@ fn main() -> glib::ExitCode {
     gettextrs::textdomain(config::GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
 
     glib::set_application_name(&gettext(&i18n("Declutter")));
-    println!("User data dir: {:?}", glib::user_data_dir());
 
     let res = gio::Resource::load(config::RESOURCES_FILE).expect("Could not load gresource file");
     gio::resources_register(&res);
-    println!(
-        "DATABASE_URL=/home/aman/.var/app/com.amankrx.Declutter.Devel/data/declutter.db diesel migration run {:?}",
-        gtk::glib::user_data_dir()
-    );
-
-    let _ = User::create(
-        "Suraj",
-        glib::DateTime::now_local()
-            .unwrap()
-            .format_iso8601()
-            .unwrap()
-            .as_str(),
-        glib::DateTime::now_local()
-            .unwrap()
-            .format_iso8601()
-            .unwrap()
-            .as_str(),
-    );
 
     let app = Application::default();
     app.run()
