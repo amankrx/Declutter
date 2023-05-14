@@ -187,6 +187,22 @@ impl User {
         self.imp().date_of_birth.borrow().clone()
     }
 
+    // Return the age in years
+    pub fn age(&self) -> i32 {
+        let now = glib::DateTime::now_local().unwrap();
+        let date_of_birth = self.date_of_birth();
+        let age = now.year() - date_of_birth.year();
+        if now.month() < date_of_birth.month() {
+            age - 1
+        } else if now.month() == date_of_birth.month()
+            && now.day_of_month() < date_of_birth.day_of_month()
+        {
+            age - 1
+        } else {
+            age
+        }
+    }
+
     pub fn created_at(&self) -> glib::DateTime {
         self.imp().created_at.borrow().clone()
     }

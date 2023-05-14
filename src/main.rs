@@ -17,6 +17,7 @@ use gtk::{gio, glib};
 use libdeclutter::{
     config,
     core::{i18n, Application},
+    models::User,
 };
 
 fn main() -> glib::ExitCode {
@@ -37,6 +38,20 @@ fn main() -> glib::ExitCode {
     println!(
         "DATABASE_URL=/home/aman/.var/app/com.amankrx.Declutter.Devel/data/declutter.db diesel migration run {:?}",
         gtk::glib::user_data_dir()
+    );
+
+    let _ = User::create(
+        "Suraj",
+        glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .as_str(),
+        glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .as_str(),
     );
 
     let app = Application::default();
