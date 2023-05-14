@@ -13,7 +13,7 @@ pub enum HabitCategory {
     Productivity,
     Finance,
     Social,
-    Abstracttion,
+    Abstraction,
     Other,
 }
 
@@ -71,8 +71,8 @@ mod tests {
         );
         assert_eq!(HabitCategory::from_str("social"), Ok(HabitCategory::Social));
         assert_eq!(
-            HabitCategory::from_str("abstracttion"),
-            Ok(HabitCategory::Abstracttion)
+            HabitCategory::from_str("abstraction"),
+            Ok(HabitCategory::Abstraction)
         );
         assert_eq!(HabitCategory::from_str("other"), Ok(HabitCategory::Other));
     }
@@ -86,7 +86,7 @@ mod tests {
         assert_eq!(HabitCategory::Productivity.as_str(), "productivity");
         assert_eq!(HabitCategory::Finance.as_str(), "finance");
         assert_eq!(HabitCategory::Social.as_str(), "social");
-        assert_eq!(HabitCategory::Abstracttion.as_str(), "abstracttion");
+        assert_eq!(HabitCategory::Abstraction.as_str(), "abstraction");
         assert_eq!(HabitCategory::Other.as_str(), "other");
     }
 }
