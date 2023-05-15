@@ -1,10 +1,22 @@
 use gtk::glib;
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 /// A [Weekday] is a day of the week.
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, strum::EnumString, strum::AsRefStr,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    strum::EnumString,
+    strum::AsRefStr,
+    glib::Enum,
 )]
+#[enum_type(name = "weekday")]
+// #[enum_type(name = "OTPAlgorithm")]
 #[strum(serialize_all = "snake_case")]
 pub enum Weekday {
     Monday,
@@ -16,19 +28,22 @@ pub enum Weekday {
     Sunday,
 }
 
-impl glib::ToValue for Weekday {
-    fn to_value(&self) -> glib::Value {
-        self.as_ref().to_value()
-    }
-
-    fn value_type(&self) -> glib::Type {
-        <String as glib::StaticType>::static_type()
+impl serde::Serialize for Weekday {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_ref().serialize(serializer)
     }
 }
 
-impl glib::StaticType for Weekday {
-    fn static_type() -> glib::Type {
-        <String as glib::StaticType>::static_type()
+impl<'de> serde::Deserialize<'de> for Weekday {
+    fn deserialize<D>(deserializer: D) -> Result<Weekday, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let weekday_str = String::deserialize(deserializer)?;
+        Weekday::from_str(&weekday_str).map_err(serde::de::Error::custom)
     }
 }
 
@@ -204,12 +219,12 @@ mod tests {
     #[test]
     fn weekday_to_value() {
         assert_eq!(
-            Weekday::Monday.to_value().get::<String>(),
-            Ok("monday".to_string())
+            Weekday::Monday.to_value().get::<Weekday>(),
+            Ok(Weekday::Monday)
         );
         assert_eq!(
-            Weekday::Tuesday.to_value().get::<String>(),
-            Ok("tuesday".to_string())
+            Weekday::Tuesday.to_value().get::<Weekday>(),
+            Ok(Weekday::Tuesday)
         );
     }
 

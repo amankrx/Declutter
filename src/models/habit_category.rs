@@ -1,9 +1,22 @@
+use std::str::FromStr;
+
 use gtk::glib;
 
 /// A [HabitCategory] is a type of habit.
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, strum::EnumString, strum::AsRefStr,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    strum::EnumString,
+    strum::AsRefStr,
+    glib::Boxed,
 )]
+#[boxed_type(name = "habit_category")]
 #[strum(serialize_all = "snake_case")]
 pub enum HabitCategory {
     Body,
@@ -23,25 +36,44 @@ impl Default for HabitCategory {
     }
 }
 
-impl glib::ToValue for HabitCategory {
-    fn to_value(&self) -> glib::Value {
-        self.as_ref().to_value()
-    }
+// impl glib::ToValue for HabitCategory {
+//     fn to_value(&self) -> glib::Value {
+//         self.as_ref().to_value()
+//     }
 
-    fn value_type(&self) -> glib::Type {
-        <String as glib::StaticType>::static_type()
-    }
-}
+//     fn value_type(&self) -> glib::Type {
+//         <String as glib::StaticType>::static_type()
+//     }
+// }
 
-impl glib::StaticType for HabitCategory {
-    fn static_type() -> glib::Type {
-        <String as glib::StaticType>::static_type()
-    }
-}
+// impl glib::StaticType for HabitCategory {
+//     fn static_type() -> glib::Type {
+//         <String as glib::StaticType>::static_type()
+//     }
+// }
 
 impl HabitCategory {
     pub fn as_str(&self) -> &str {
         self.as_ref()
+    }
+}
+
+impl serde::Serialize for HabitCategory {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_ref().serialize(serializer)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for HabitCategory {
+    fn deserialize<D>(deserializer: D) -> Result<HabitCategory, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let category_str = String::deserialize(deserializer)?;
+        HabitCategory::from_str(&category_str).map_err(serde::de::Error::custom)
     }
 }
 

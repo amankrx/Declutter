@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use gtk::glib;
 
 /// A [DurationKind] is a type of habit.
@@ -35,6 +37,25 @@ impl glib::StaticType for DurationKind {
 impl DurationKind {
     pub fn as_str(&self) -> &str {
         self.as_ref()
+    }
+}
+
+impl serde::Serialize for DurationKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_ref().serialize(serializer)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for DurationKind {
+    fn deserialize<D>(deserializer: D) -> Result<DurationKind, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        DurationKind::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 

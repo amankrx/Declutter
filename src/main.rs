@@ -17,6 +17,7 @@ use gtk::{gio, glib};
 use libdeclutter::{
     config,
     core::{i18n, Application},
+    models::User,
 };
 
 fn main() -> glib::ExitCode {
@@ -33,6 +34,20 @@ fn main() -> glib::ExitCode {
 
     let res = gio::Resource::load(config::RESOURCES_FILE).expect("Could not load gresource file");
     gio::resources_register(&res);
+
+    let _ = User::create(
+        "Suraj",
+        glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .as_str(),
+        glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .as_str(),
+    );
 
     let app = Application::default();
     app.run()

@@ -2,19 +2,19 @@ use anyhow::Result;
 use diesel::prelude::*;
 use gtk::{glib, prelude::*, subclass::prelude::*};
 
-use crate::{core::database, schema::users};
+use crate::{core::database, schema::user};
 
 #[derive(Insertable)]
-#[diesel(table_name = users)]
-struct NewUser<'a> {
-    name: &'a str,
-    date_of_birth: &'a str,
-    created_at: &'a str,
+#[diesel(table_name = user)]
+struct NewUser {
+    name: String,
+    date_of_birth: String,
+    created_at: String,
 }
 
 #[derive(Queryable, Identifiable)]
-#[diesel(table_name = users)]
-struct UserRow {
+#[diesel(table_name = user)]
+struct DieselUser {
     id: i32,
     name: String,
     date_of_birth: String,
@@ -25,18 +25,25 @@ struct UserRow {
 mod imp {
     use glib::ParamSpecBoxed;
     use once_cell::sync::Lazy;
+    use serde::{Deserialize, Serialize};
     use std::cell::{Cell, RefCell};
+
+    use crate::core::serialize;
 
     use super::*;
 
-    #[derive(glib::Properties)]
+    #[derive(glib::Properties, Serialize, Deserialize)]
     #[properties(wrapper_type = super::User)]
     pub struct User {
         #[property(get, set, construct)]
         pub id: Cell<u32>,
         #[property(get, set = Self::set_name)]
         pub name: RefCell<String>,
+        #[serde(serialize_with = "serialize::serialize_refcell_datetime")]
+        #[serde(deserialize_with = "serialize::deserialize_refcell_datetime")]
         pub date_of_birth: RefCell<glib::DateTime>,
+        #[serde(serialize_with = "serialize::serialize_refcell_datetime")]
+        #[serde(deserialize_with = "serialize::deserialize_refcell_datetime")]
         pub created_at: RefCell<glib::DateTime>,
     }
 
@@ -98,9 +105,9 @@ mod imp {
             let db = database::connection();
             let mut conn = db.get()?;
 
-            let target = users::table.filter(users::columns::id.eq(id));
+            let target = user::table.filter(user::columns::id.eq(id));
             diesel::update(target)
-                .set(users::columns::name.eq(name))
+                .set(user::columns::name.eq(name))
                 .execute(&mut conn)?;
             Ok(())
         }
@@ -127,41 +134,40 @@ impl User {
         let db = database::connection();
         let mut conn = db.get()?;
 
-        diesel::insert_into(users::table)
+        diesel::insert_into(user::table)
             .values(&NewUser {
-                name,
-                date_of_birth,
-                created_at,
+                name: name.to_owned(),
+                date_of_birth: date_of_birth.to_owned(),
+                created_at: created_at.to_owned(),
             })
             .execute(&mut conn)?;
 
-        users::table
-            .order(users::columns::id.desc())
-            .first::<UserRow>(&mut conn)
+        user::table
+            .order(user::columns::id.desc())
+            .first::<DieselUser>(&mut conn)
             .map_err(From::from)
             .map(|user| {
                 Self::new(
                     user.id as u32,
                     &user.name,
-                    &user.date_of_birth,
-                    &user.created_at,
+                    glib::DateTime::from_iso8601(&user.date_of_birth, None).unwrap(),
+                    glib::DateTime::from_iso8601(&user.created_at, None).unwrap(),
                 )
                 .unwrap()
             })
     }
 
-    pub fn new(id: u32, name: &str, date_of_birth: &str, created_at: &str) -> Result<User> {
+    pub fn new(
+        id: u32,
+        name: &str,
+        date_of_birth: glib::DateTime,
+        created_at: glib::DateTime,
+    ) -> Result<User> {
         let user = glib::Object::builder::<Self>()
             .property("id", id)
             .property("name", name)
-            .property(
-                "date-of-birth",
-                &glib::DateTime::from_iso8601(date_of_birth, None).unwrap(),
-            )
-            .property(
-                "created-at",
-                &glib::DateTime::from_iso8601(created_at, None).unwrap(),
-            )
+            .property("date-of-birth", date_of_birth)
+            .property("created-at", created_at)
             .build();
 
         Ok(user)
@@ -171,15 +177,15 @@ impl User {
         let db = database::connection();
         let mut conn = db.get()?;
 
-        let result = users::table
-            .filter(users::columns::id.eq(id as i32))
-            .first::<UserRow>(&mut conn)?;
+        let result = user::table
+            .filter(user::columns::id.eq(id as i32))
+            .first::<DieselUser>(&mut conn)?;
 
         Ok(Self::new(
             result.id as u32,
             &result.name,
-            &result.date_of_birth,
-            &result.created_at,
+            glib::DateTime::from_iso8601(&result.date_of_birth, None).unwrap(),
+            glib::DateTime::from_iso8601(&result.created_at, None).unwrap(),
         )?)
     }
 
@@ -211,7 +217,7 @@ impl User {
         let db = database::connection();
         let mut conn = db.get()?;
 
-        let result = users::table.load::<UserRow>(&mut conn)?;
+        let result = user::table.load::<DieselUser>(&mut conn)?;
 
         Ok(result
             .into_iter()
@@ -219,8 +225,8 @@ impl User {
                 Self::new(
                     user.id as u32,
                     &user.name,
-                    &user.date_of_birth,
-                    &user.created_at,
+                    glib::DateTime::from_iso8601(&user.date_of_birth, None).unwrap(),
+                    glib::DateTime::from_iso8601(&user.created_at, None).unwrap(),
                 )
                 .unwrap()
             })
@@ -231,7 +237,7 @@ impl User {
         let db = database::connection();
         let mut conn = db.get()?;
 
-        let result = users::table.count().get_result::<i64>(&mut conn)?;
+        let result = user::table.count().get_result::<i64>(&mut conn)?;
 
         Ok(result)
     }
@@ -252,11 +258,11 @@ impl User {
             None => &binding,
         };
 
-        let target = users::table.filter(users::columns::id.eq(self.id() as i32));
+        let target = user::table.filter(user::columns::id.eq(self.id() as i32));
         diesel::update(target)
             .set((
-                users::columns::name.eq(user_name),
-                users::columns::date_of_birth.eq(user_date_of_birth),
+                user::columns::name.eq(user_name),
+                user::columns::date_of_birth.eq(user_date_of_birth),
             ))
             .execute(&mut conn)?;
 
@@ -266,7 +272,7 @@ impl User {
     pub fn delete(&self) -> Result<()> {
         let db = database::connection();
         let mut conn = db.get()?;
-        diesel::delete(users::table.filter(users::columns::id.eq(self.id() as i32)))
+        diesel::delete(user::table.filter(user::columns::id.eq(self.id() as i32)))
             .execute(&mut conn)?;
         Ok(())
     }

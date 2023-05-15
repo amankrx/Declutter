@@ -1,5 +1,5 @@
 -- Your SQL goes here
-CREATE TABLE "users" (
+CREATE TABLE "user" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"name"	TEXT NOT NULL,
 	"date_of_birth"	TEXT NOT NULL,

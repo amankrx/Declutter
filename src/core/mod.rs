@@ -8,3 +8,4 @@ pub mod i18n;
 #[doc(inline)]
 pub use application::Application;
 pub use i18n::*;
+pub mod serialize;

@@ -1,10 +1,23 @@
+use std::str::FromStr;
+
 use crate::models::{Compare, Frequency, UnitSystem};
 use gtk::glib;
 
 /// A [HabitName] is a particular habit.
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, strum::EnumString, strum::AsRefStr,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    strum::EnumString,
+    strum::AsRefStr,
+    glib::Boxed,
 )]
+#[boxed_type(name = "habit_name")]
 #[strum(serialize_all = "snake_case")]
 pub enum HabitName {
     Exercise,
@@ -44,19 +57,22 @@ impl Default for HabitName {
     }
 }
 
-impl glib::ToValue for HabitName {
-    fn to_value(&self) -> glib::Value {
-        self.as_ref().to_value()
-    }
-
-    fn value_type(&self) -> glib::Type {
-        <String as glib::StaticType>::static_type()
+impl serde::Serialize for HabitName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_ref().serialize(serializer)
     }
 }
 
-impl glib::StaticType for HabitName {
-    fn static_type() -> glib::Type {
-        <String as glib::StaticType>::static_type()
+impl<'de> serde::Deserialize<'de> for HabitName {
+    fn deserialize<D>(deserializer: D) -> Result<HabitName, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let habitname_str = String::deserialize(deserializer)?;
+        HabitName::from_str(&habitname_str).map_err(serde::de::Error::custom)
     }
 }
 
@@ -353,7 +369,6 @@ impl HabitName {
 mod tests {
     use super::*;
     use crate::models::DurationKind;
-    use std::str::FromStr;
 
     #[test]
     fn test_habit_name_default() {

@@ -1,4 +1,8 @@
 use crate::models::{DurationKind, UnitSystem, Weekday};
+use gtk::glib;
+
+#[derive(Clone, glib::Boxed, PartialEq, Eq, serde::Deserialize, serde::Serialize, Debug)]
+#[boxed_type(name = "Frequency")]
 pub struct Frequency {
     pub duration_kind: DurationKind,
     pub unit: UnitSystem,
@@ -75,6 +79,48 @@ impl Frequency {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_deserialize() {
+        let freq = Frequency::new(
+            Some(DurationKind::Daily),
+            Some(UnitSystem::Count),
+            Some(1),
+            None,
+        );
+        let freq_json = serde_json::to_string(&freq).unwrap();
+        let freq: Frequency = serde_json::from_str(&freq_json).unwrap();
+        assert_eq!(freq.duration_kind, DurationKind::Daily);
+        assert_eq!(freq.unit, UnitSystem::Count);
+        assert_eq!(freq.target_value, 1);
+        assert_eq!(
+            freq.weekdays,
+            Some(vec![
+                Weekday::Monday,
+                Weekday::Tuesday,
+                Weekday::Wednesday,
+                Weekday::Thursday,
+                Weekday::Friday,
+                Weekday::Saturday,
+                Weekday::Sunday,
+            ])
+        );
+    }
+
+    #[test]
+    fn test_serialize() {
+        let freq = Frequency::new(
+            Some(DurationKind::Daily),
+            Some(UnitSystem::Count),
+            Some(1),
+            None,
+        );
+        let freq_json = serde_json::to_string(&freq).unwrap();
+        assert_eq!(
+            freq_json,
+            "{\"duration_kind\":\"daily\",\"unit\":\"count\",\"target_value\":1,\"weekdays\":[\"monday\",\"tuesday\",\"wednesday\",\"thursday\",\"friday\",\"saturday\",\"sunday\"]}"
+        );
+    }
 
     #[test]
     fn test_default() {
