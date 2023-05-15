@@ -15,7 +15,6 @@ pub struct UpdateHabit {
     categories: Option<String>,
     icon: Option<String>,
     frequency: String,
-    updated_at: Option<String>,
     reminder_times: Option<String>,
     note: Option<String>,
     archived: i32,
@@ -276,8 +275,6 @@ impl Habit {
         categories: Option<Vec<HabitCategory>>,
         icon: Option<String>,
         frequency: Frequency,
-        created_at: glib::DateTime,
-        updated_at: Option<glib::DateTime>,
         reminder_times: Option<Vec<glib::DateTime>>,
         note: Option<String>,
         archived: bool,
@@ -297,11 +294,12 @@ impl Habit {
             },
             icon,
             frequency: serialize::serialize_struct_to_string(&frequency),
-            created_at: created_at.format_iso8601().unwrap().to_string(),
-            updated_at: match updated_at {
-                Some(date) => Some(date.format_iso8601().unwrap().to_string()),
-                None => None,
-            },
+            created_at: glib::DateTime::now_local()
+                .unwrap()
+                .format_iso8601()
+                .unwrap()
+                .to_string(),
+            updated_at: None,
             reminder_times: match reminder_times {
                 Some(times) => Some(serialize::serialize_vec_datetime_to_string(&times)),
                 None => None,
@@ -361,6 +359,11 @@ impl Habit {
         let db = database::connection();
         let mut conn = db.get()?;
         let target = habit::table.filter(habit::columns::id.eq(self.id() as i32));
+        let curr_time = glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .to_string();
         diesel::update(target)
             .set((
                 habit::columns::user_id.eq(updated_habit.user_id as i32),
@@ -369,7 +372,7 @@ impl Habit {
                 habit::columns::categories.eq(updated_habit.categories.clone()),
                 habit::columns::icon.eq(updated_habit.icon.clone()),
                 habit::columns::frequency.eq(updated_habit.frequency.clone()),
-                habit::columns::updated_at.eq(updated_habit.updated_at.clone()),
+                habit::columns::updated_at.eq(curr_time.clone()),
                 habit::columns::reminder_times.eq(updated_habit.reminder_times.clone()),
                 habit::columns::note.eq(updated_habit.note.clone()),
                 habit::columns::archived.eq(updated_habit.archived.clone() as i32),
@@ -389,10 +392,10 @@ impl Habit {
         self.set_frequency(serialize::deserialize_string_to_struct(
             &updated_habit.frequency.clone(),
         ));
-        self.set_updated_at(match updated_habit.updated_at.clone() {
-            Some(date) => Some(glib::DateTime::from_iso8601(date.as_str(), None).unwrap()),
-            None => None,
-        });
+        self.set_updated_at(Some(glib::DateTime::from_iso8601(
+            curr_time.as_str(),
+            None,
+        )?));
         self.set_reminder_times(match updated_habit.reminder_times.clone() {
             Some(times) => Some(serialize::deserialize_string_to_vec_datetime(&times)),
             None => None,
@@ -406,6 +409,95 @@ impl Habit {
         self.set_archived_reason(updated_habit.archived_reason.clone());
 
         Ok(())
+    }
+
+    pub fn find(id: u32) -> Result<Self, Box<dyn std::error::Error>> {
+        let db = database::connection();
+        let mut conn = db.get()?;
+        habit::table
+            .filter(habit::columns::id.eq(id as i32))
+            .first::<DieselHabit>(&mut conn)
+            .map_err(From::from)
+            .map(|habit| {
+                Self::new(
+                    habit.id as u32,
+                    habit.user_id as u32,
+                    HabitName::from_str(&habit.name).unwrap(),
+                    habit.description,
+                    habit.categories.map(|c| serde_json::from_str(&c).unwrap()),
+                    habit.icon,
+                    serialize::deserialize_string_to_struct(&habit.frequency),
+                    glib::DateTime::from_iso8601(habit.created_at.as_str(), None).unwrap(),
+                    match habit.updated_at {
+                        Some(date) => {
+                            Some(glib::DateTime::from_iso8601(date.as_str(), None).unwrap())
+                        }
+                        None => None,
+                    },
+                    match habit.reminder_times {
+                        Some(times) => Some(serialize::deserialize_string_to_vec_datetime(&times)),
+                        None => None,
+                    },
+                    habit.note,
+                    habit.archived == 1,
+                    match habit.archived_date {
+                        Some(date) => {
+                            Some(glib::DateTime::from_iso8601(date.as_str(), None).unwrap())
+                        }
+                        None => None,
+                    },
+                    habit.archived_reason,
+                )
+                .unwrap()
+            })
+    }
+
+    pub fn find_all() -> Result<Vec<Self>, Box<dyn std::error::Error>> {
+        let db = database::connection();
+        let mut conn = db.get()?;
+        habit::table
+            .order(habit::columns::id.desc())
+            .load::<DieselHabit>(&mut conn)
+            .map_err(From::from)
+            .map(|habits| {
+                habits
+                    .into_iter()
+                    .map(|habit| {
+                        Self::new(
+                            habit.id as u32,
+                            habit.user_id as u32,
+                            HabitName::from_str(&habit.name).unwrap(),
+                            habit.description,
+                            habit.categories.map(|c| serde_json::from_str(&c).unwrap()),
+                            habit.icon,
+                            serialize::deserialize_string_to_struct(&habit.frequency),
+                            glib::DateTime::from_iso8601(habit.created_at.as_str(), None).unwrap(),
+                            match habit.updated_at {
+                                Some(date) => {
+                                    Some(glib::DateTime::from_iso8601(date.as_str(), None).unwrap())
+                                }
+                                None => None,
+                            },
+                            match habit.reminder_times {
+                                Some(times) => {
+                                    Some(serialize::deserialize_string_to_vec_datetime(&times))
+                                }
+                                None => None,
+                            },
+                            habit.note,
+                            habit.archived == 1,
+                            match habit.archived_date {
+                                Some(date) => {
+                                    Some(glib::DateTime::from_iso8601(date.as_str(), None).unwrap())
+                                }
+                                None => None,
+                            },
+                            habit.archived_reason,
+                        )
+                        .unwrap()
+                    })
+                    .collect()
+            })
     }
 
     pub fn delete(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -423,17 +515,14 @@ mod tests {
     use crate::models::HabitName;
 
     #[test]
-    fn test_update() {
-        let date = glib::DateTime::now_local().unwrap();
+    fn test_habit() {
         let habit = Habit::create(
             1,
             HabitName::Cleaning,
-            None,
-            None,
+            Some("Cleaning your room".to_string()),
+            Some(vec![HabitCategory::Body, HabitCategory::Mind]),
             None,
             Frequency::default(),
-            date.clone(),
-            None,
             None,
             None,
             false,
@@ -442,6 +531,41 @@ mod tests {
         )
         .unwrap();
 
+        let habit_from_db = Habit::find(habit.id());
+
+        assert_eq!(habit.user_id(), habit_from_db.as_ref().unwrap().user_id());
+        assert_eq!(habit.name(), habit_from_db.as_ref().unwrap().name());
+        assert_eq!(
+            habit.description(),
+            habit_from_db.as_ref().unwrap().description()
+        );
+        assert_eq!(
+            habit.categories(),
+            habit_from_db.as_ref().unwrap().categories()
+        );
+        assert_eq!(habit.icon(), habit_from_db.as_ref().unwrap().icon());
+        assert_eq!(
+            habit.frequency(),
+            habit_from_db.as_ref().unwrap().frequency()
+        );
+        assert_eq!(
+            habit.reminder_times(),
+            habit_from_db.as_ref().unwrap().reminder_times()
+        );
+        assert_eq!(habit.note(), habit_from_db.as_ref().unwrap().note());
+        assert_eq!(habit.archived(), habit_from_db.as_ref().unwrap().archived());
+        assert_eq!(
+            habit.archived_date(),
+            habit_from_db.as_ref().unwrap().archived_date()
+        );
+        assert_eq!(
+            habit.archived_reason(),
+            habit_from_db.as_ref().unwrap().archived_reason()
+        );
+
+        // let habit_count = Habit::find_all().unwrap().len();
+        // assert_eq!(habit_count, 1);
+
         let updated_habit = UpdateHabit {
             user_id: 2,
             name: "cleaning".to_string(),
@@ -449,7 +573,6 @@ mod tests {
             categories: None,
             icon: None,
             frequency: serialize::serialize_struct_to_string(&Frequency::default()),
-            updated_at: None,
             reminder_times: None,
             note: None,
             archived: 1,
@@ -465,12 +588,12 @@ mod tests {
         assert_eq!(habit.categories(), None);
         assert_eq!(habit.icon(), None);
         assert_eq!(habit.frequency(), Frequency::default());
-        assert_eq!(habit.created_at(), date.clone());
-        assert_eq!(habit.updated_at(), None);
         assert_eq!(habit.reminder_times(), None);
         assert_eq!(habit.note(), None);
         assert_eq!(habit.archived(), true);
         assert_eq!(habit.archived_date(), None);
         assert_eq!(habit.archived_reason(), None);
+
+        let _ = habit.delete();
     }
 }

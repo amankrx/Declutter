@@ -24,7 +24,7 @@ diesel::table! {
         id -> Integer,
         user_id -> Integer,
         habit_id -> Integer,
-        datetime -> Text,
+        entry_time -> Text,
         note -> Nullable<Text>,
         value -> Integer,
     }

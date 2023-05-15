@@ -1,9 +1,22 @@
+use std::str::FromStr;
+
 use gtk::glib;
 
 /// A [Compare] is a comparison operator.
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, strum::EnumString, strum::AsRefStr,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    strum::EnumString,
+    glib::Boxed,
+    strum::AsRefStr,
 )]
+#[boxed_type(name = "compare")]
 #[strum(serialize_all = "snake_case")]
 pub enum Compare {
     Greater,
@@ -20,13 +33,22 @@ impl Default for Compare {
     }
 }
 
-impl glib::ToValue for Compare {
-    fn to_value(&self) -> glib::Value {
-        self.as_ref().to_value()
+impl serde::Serialize for Compare {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_ref().serialize(serializer)
     }
+}
 
-    fn value_type(&self) -> glib::Type {
-        <String as glib::StaticType>::static_type()
+impl<'de> serde::Deserialize<'de> for Compare {
+    fn deserialize<D>(deserializer: D) -> Result<Compare, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let compare_str = String::deserialize(deserializer)?;
+        Compare::from_str(&compare_str).map_err(serde::de::Error::custom)
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::models::{DurationKind, UnitSystem, Weekday};
+use crate::models::{Compare, DurationKind, UnitSystem, Weekday};
 use gtk::glib;
 
 #[derive(Clone, glib::Boxed, PartialEq, Eq, serde::Deserialize, serde::Serialize, Debug)]
@@ -8,6 +8,7 @@ pub struct Frequency {
     pub unit: UnitSystem,
     pub target_value: u32,
     pub weekdays: Option<Vec<Weekday>>,
+    pub comparator: Compare,
 }
 
 impl Default for Frequency {
@@ -28,6 +29,7 @@ impl Default for Frequency {
                 ]
                 .to_vec(),
             ),
+            comparator: Compare::GreaterOrEqual,
         }
     }
 }
@@ -38,6 +40,7 @@ impl Frequency {
         unit: Option<UnitSystem>,
         target_value: Option<u32>,
         weekdays: Option<Vec<Weekday>>,
+        comparator: Option<Compare>,
     ) -> Self {
         Self {
             duration_kind: duration_kind.unwrap_or(DurationKind::Daily),
@@ -64,6 +67,7 @@ impl Frequency {
             } else {
                 None
             },
+            comparator: comparator.unwrap_or(Compare::GreaterOrEqual),
         }
     }
 
@@ -86,6 +90,7 @@ mod tests {
             Some(DurationKind::Daily),
             Some(UnitSystem::Count),
             Some(1),
+            None,
             None,
         );
         let freq_json = serde_json::to_string(&freq).unwrap();
@@ -114,11 +119,12 @@ mod tests {
             Some(UnitSystem::Count),
             Some(1),
             None,
+            None,
         );
         let freq_json = serde_json::to_string(&freq).unwrap();
         assert_eq!(
             freq_json,
-            "{\"duration_kind\":\"daily\",\"unit\":\"count\",\"target_value\":1,\"weekdays\":[\"monday\",\"tuesday\",\"wednesday\",\"thursday\",\"friday\",\"saturday\",\"sunday\"]}"
+            "{\"duration_kind\":\"daily\",\"unit\":\"count\",\"target_value\":1,\"weekdays\":[\"monday\",\"tuesday\",\"wednesday\",\"thursday\",\"friday\",\"saturday\",\"sunday\"],\"comparator\":\"greater_or_equal\"}"
         );
     }
 
@@ -149,6 +155,7 @@ mod tests {
             Some(UnitSystem::Meters),
             Some(5),
             None,
+            None,
         );
         assert_eq!(freq.duration_kind, DurationKind::Monthly);
         assert_eq!(freq.unit, UnitSystem::Meters);
@@ -162,6 +169,7 @@ mod tests {
             Some(DurationKind::Daily),
             Some(UnitSystem::Meters),
             Some(5),
+            None,
             None,
         );
         assert_eq!(freq.duration_kind, DurationKind::Daily);
@@ -193,6 +201,7 @@ mod tests {
                 Weekday::Thursday,
                 Weekday::Sunday,
             ]),
+            None,
         );
         assert_eq!(freq.duration_kind, DurationKind::Daily);
         assert_eq!(freq.unit, UnitSystem::Meters);
@@ -215,12 +224,14 @@ mod tests {
             Some(UnitSystem::Count),
             Some(1),
             None,
+            None,
         );
         assert!(freq.is_one_time());
         let freq = Frequency::new(
             Some(DurationKind::Daily),
             Some(UnitSystem::Meters),
             Some(5),
+            None,
             None,
         );
         assert!(!freq.is_one_time());
@@ -233,12 +244,14 @@ mod tests {
             Some(UnitSystem::Count),
             Some(0),
             None,
+            None,
         );
         assert!(freq.is_abstraction());
         let freq = Frequency::new(
             Some(DurationKind::Daily),
             Some(UnitSystem::Meters),
             Some(5),
+            None,
             None,
         );
         assert!(!freq.is_abstraction());

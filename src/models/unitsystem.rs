@@ -59,22 +59,6 @@ impl Default for UnitSystem {
     }
 }
 
-// impl glib::ToValue for UnitSystem {
-//     fn to_value(&self) -> glib::Value {
-//         self.as_ref().to_value()
-//     }
-
-//     fn value_type(&self) -> glib::Type {
-//         <String as glib::StaticType>::static_type()
-//     }
-// }
-
-// impl glib::StaticType for UnitSystem {
-//     fn static_type() -> glib::Type {
-//         <String as glib::StaticType>::static_type()
-//     }
-// }
-
 // Implement an iterator for UnitSystem
 impl IntoIterator for UnitSystem {
     type Item = UnitSystem;

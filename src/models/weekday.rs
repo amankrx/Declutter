@@ -13,10 +13,9 @@ use std::{collections::HashMap, str::FromStr};
     Ord,
     strum::EnumString,
     strum::AsRefStr,
-    glib::Enum,
+    glib::Boxed,
 )]
-#[enum_type(name = "weekday")]
-// #[enum_type(name = "OTPAlgorithm")]
+#[boxed_type(name = "weekday")]
 #[strum(serialize_all = "snake_case")]
 pub enum Weekday {
     Monday,

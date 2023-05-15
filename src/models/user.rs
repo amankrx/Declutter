@@ -173,7 +173,7 @@ impl User {
         Ok(user)
     }
 
-    pub fn get_user(id: u32) -> Result<User> {
+    pub fn find(id: u32) -> Result<User> {
         let db = database::connection();
         let mut conn = db.get()?;
 
@@ -213,7 +213,7 @@ impl User {
         self.imp().created_at.borrow().clone()
     }
 
-    pub fn get_users() -> Result<Vec<User>> {
+    pub fn find_all() -> Result<Vec<User>> {
         let db = database::connection();
         let mut conn = db.get()?;
 

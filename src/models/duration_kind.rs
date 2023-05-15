@@ -4,8 +4,19 @@ use gtk::glib;
 
 /// A [DurationKind] is a type of habit.
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, strum::EnumString, strum::AsRefStr,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    strum::EnumString,
+    strum::AsRefStr,
+    glib::Boxed,
 )]
+#[boxed_type(name = "duration_kind")]
 #[strum(serialize_all = "snake_case")]
 pub enum DurationKind {
     Daily,
@@ -15,22 +26,6 @@ pub enum DurationKind {
 impl Default for DurationKind {
     fn default() -> Self {
         Self::Daily
-    }
-}
-
-impl glib::ToValue for DurationKind {
-    fn to_value(&self) -> glib::Value {
-        self.as_ref().to_value()
-    }
-
-    fn value_type(&self) -> glib::Type {
-        <String as glib::StaticType>::static_type()
-    }
-}
-
-impl glib::StaticType for DurationKind {
-    fn static_type() -> glib::Type {
-        <String as glib::StaticType>::static_type()
     }
 }
 

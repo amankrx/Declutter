@@ -36,22 +36,6 @@ impl Default for HabitCategory {
     }
 }
 
-// impl glib::ToValue for HabitCategory {
-//     fn to_value(&self) -> glib::Value {
-//         self.as_ref().to_value()
-//     }
-
-//     fn value_type(&self) -> glib::Type {
-//         <String as glib::StaticType>::static_type()
-//     }
-// }
-
-// impl glib::StaticType for HabitCategory {
-//     fn static_type() -> glib::Type {
-//         <String as glib::StaticType>::static_type()
-//     }
-// }
-
 impl HabitCategory {
     pub fn as_str(&self) -> &str {
         self.as_ref()
