@@ -130,15 +130,21 @@ glib::wrapper! {
 }
 
 impl User {
-    pub fn create(name: &str, date_of_birth: &str, created_at: &str) -> Result<User> {
+    pub fn create(name: &str, date_of_birth: &str) -> Result<User> {
         let db = database::connection();
         let mut conn = db.get()?;
+
+        let curr_time = glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .to_string();
 
         diesel::insert_into(user::table)
             .values(&NewUser {
                 name: name.to_owned(),
                 date_of_birth: date_of_birth.to_owned(),
-                created_at: created_at.to_owned(),
+                created_at: curr_time,
             })
             .execute(&mut conn)?;
 

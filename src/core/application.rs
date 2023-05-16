@@ -16,16 +16,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use adw::subclass::prelude::*;
+use adw::{subclass::prelude::*, AboutWindow};
 
 use gettextrs::gettext;
 use gtk::prelude::*;
-use gtk::{gdk, gio, glib};
+use gtk::{
+    gdk, gio,
+    glib::{self, clone, g_error, g_info},
+};
 use log::{debug, info};
 
 use crate::{
     config::{APP_ID, PKGDATADIR, PROFILE, VERSION},
-    core::i18n,
+    core::{i18n, spawn},
+    models::User,
     windows::Window,
 };
 
@@ -34,9 +38,19 @@ mod imp {
     use glib::WeakRef;
     use once_cell::sync::OnceCell;
 
-    #[derive(Debug, Default)]
+    #[derive(Debug)]
     pub struct Application {
+        pub settings: gio::Settings,
         pub window: OnceCell<WeakRef<Window>>,
+    }
+
+    impl Default for Application {
+        fn default() -> Self {
+            Self {
+                settings: gio::Settings::new(APP_ID),
+                window: OnceCell::new(),
+            }
+        }
     }
 
     #[glib::object_subclass]
@@ -59,13 +73,26 @@ mod imp {
                 window.present();
                 return;
             }
-
             let window = Window::new(&app);
-            self.window
-                .set(window.downgrade())
-                .expect("Window already set.");
 
-            app.main_window().present();
+            spawn(clone!(@strong app => async move {
+                if app.imp().settings.int("active-user-id") <= 0 {
+                    match app.create_initital_user() {
+                        Ok(()) => {
+                            g_info!(APP_ID, "Created initial user...");
+                        }
+                        Err(e) => {
+                            g_error!(APP_ID, "Error creating initial user: {}", e);
+                        }
+                    }
+                }
+
+                app.imp().window
+                    .set(window.downgrade())
+                    .expect("Window already set.");
+
+                app.main_window().present();
+            }));
         }
 
         fn startup(&self) {
@@ -110,7 +137,7 @@ impl Application {
         // About
         let action_about = gio::ActionEntry::builder("about")
             .activate(|app: &Self, _, _| {
-                app.show_about_dialog();
+                app.show_about_window();
             })
             .build();
         self.add_action_entries([action_quit, action_about]);
@@ -134,22 +161,49 @@ impl Application {
         }
     }
 
-    fn show_about_dialog(&self) {
-        let dialog = gtk::AboutDialog::builder()
-            .logo_icon_name(APP_ID)
+    pub fn create_initital_user(&self) -> Result<(), glib::BoolError> {
+        let curr_time = glib::DateTime::now_local()
+            .unwrap()
+            .format_iso8601()
+            .unwrap()
+            .to_string();
+
+        let user = User::create("User", &curr_time);
+        match user {
+            Ok(user) => {
+                self.imp()
+                    .settings
+                    .set_int("active-user-id", user.id() as i32)?;
+            }
+            Err(e) => {
+                println!("Error creating user: {}", e);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn show_about_window(&self) {
+        let about_window = AboutWindow::builder()
+            .application_icon(APP_ID)
             .license_type(gtk::License::Gpl30)
             .website("https://gitlab.gnome.org/amankrx/declutter/")
+            .issue_url("https://gitlab.gnome.org/amankrx/declutter/issues/")
             .comments(&i18n("A Habit Tracking application for GNOME Desktop"))
-            .program_name("Declutter")
+            .application_name("Declutter")
             .version(VERSION)
             .transient_for(&self.main_window())
             .translator_credits(gettext("translator-credits"))
             .modal(true)
-            .authors(vec!["Aman Kumar"])
-            .artists(vec!["Aman Kumar"])
+            .developer_name("Aman Kumar")
+            .developers(vec!["Aman Kumar <akumar@gnome.org>"])
+            .artists(vec!["Aman Kumar <akumar@gnome.org>"])
             .build();
+        about_window.present();
+    }
 
-        dialog.present();
+    fn show_preferences_window(&self) {
+        todo!()
     }
 
     pub fn run(&self) -> glib::ExitCode {
