@@ -20,7 +20,7 @@ menu primary_menu {
   }
 }
 
-template Window : Adw.ApplicationWindow {
+template $Window : Adw.ApplicationWindow {
   content:   Box {
     orientation: vertical;
 
@@ -38,14 +38,10 @@ template Window : Adw.ApplicationWindow {
       }
     }
 
-    Label label {
-      label: _("Hello world!");
-      hexpand: true;
-      vexpand: true;
-
-      styles [
-        "title-header",
-      ]
+    Gtk.ScrolledWindow {
+      Gtk.ListBox list_box {
+        selection-mode: single;
+      }
     }
   }
 
