@@ -6,6 +6,10 @@ use crate::config::{APP_ID, PROFILE};
 use crate::core::Application;
 
 mod imp {
+    use gtk::ListBoxRow;
+
+    use crate::models::{Frequency, Habit, HabitModel};
+
     use super::*;
 
     #[derive(Debug, gtk::CompositeTemplate)]
@@ -13,6 +17,8 @@ mod imp {
     pub struct Window {
         #[template_child]
         pub headerbar: TemplateChild<adw::HeaderBar>,
+        #[template_child]
+        pub list_box: TemplateChild<gtk::ListBox>,
         pub settings: gio::Settings,
     }
 
@@ -20,6 +26,7 @@ mod imp {
         fn default() -> Self {
             Self {
                 headerbar: TemplateChild::default(),
+                list_box: TemplateChild::default(),
                 settings: gio::Settings::new(APP_ID),
             }
         }
@@ -53,6 +60,36 @@ mod imp {
 
             // Load latest window state
             obj.load_window_size();
+
+            let store = HabitModel::new();
+            store.append(
+                &Habit::new(
+                    0,
+                    0,
+                    crate::models::HabitName::Cooking,
+                    None,
+                    None,
+                    None,
+                    Frequency::new(None, None, None, None, None),
+                    glib::DateTime::now_local().unwrap(),
+                    None,
+                    None,
+                    None,
+                    false,
+                    None,
+                    None,
+                )
+                .unwrap(),
+            );
+            self.list_box.bind_model(Some(&store), move |item| {
+                let row = ListBoxRow::builder();
+
+                let row = row.child(&gtk::Label::new(Some(
+                    item.downcast_ref::<Habit>().unwrap().name().as_str(),
+                )));
+
+                return row.build().upcast::<gtk::Widget>();
+            });
         }
     }
 
