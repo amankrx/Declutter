@@ -4,24 +4,28 @@ version = "0.1.0"
 authors = ["Aman Kumar <akumar@gnome.org>"]
 edition = "2021"
 
+[profile.release]
+lto = true
+
 [lib]
 name = "libdeclutter"
 path = "src/lib.rs"
 
 [dependencies]
-adw = { version = "0.3.1", package = "libadwaita", features = ["v1_2"] }
-anyhow = "1.0.71"
-diesel = {version = "2.0", features = ["sqlite", "r2d2"]}
-diesel_migrations = {version = "2.0", features = ["sqlite"]}
+adw = { version = "0.5.3", package = "libadwaita", features = ["v1_2"] }
+anyhow = "1.0.75"
+diesel = { version = "2.1.3", features = ["sqlite", "r2d2"] }
+diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 easy-ext = "1.0.1"
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
-gtk = { version = "0.6", package = "gtk4" }
-log = "0.4"
-once_cell = "1.14"
-pretty_env_logger = "0.4"
-regex = "1.8.1"
-serde = "1.0.163"
-serde_json = "1.0.96"
-strum = {version = "0.24.1", features = ["derive"]}
+gtk = { version = "0.7", package = "gtk4", features = ["v4_8"] }
+log = "0.4.20"
+once_cell = "1.18.0"
+pretty_env_logger = "0.5.0"
+regex = "1.10.1"
+serde = "1.0.189"
+serde_json = "1.0.107"
+strum = { version = "0.25.0", features = ["derive"] }
 tempdir = "0.3.7"
-tracing = {version = "0.1", default-features = false}
+tracing = "0.1.37"
+tracing-subscriber = "0.3"

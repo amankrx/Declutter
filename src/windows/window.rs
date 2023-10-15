@@ -96,9 +96,9 @@ mod imp {
     impl WidgetImpl for Window {}
     impl WindowImpl for Window {
         // Save window state on delete event
-        fn close_request(&self) -> gtk::Inhibit {
+        fn close_request(&self) -> glib::Propagation {
             if let Err(err) = self.obj().save_window_size() {
-                log::warn!("Failed to save window state, {}", &err);
+                tracing::warn!("Failed to save window state, {}", &err);
             }
 
             // Pass close request on to the parent
