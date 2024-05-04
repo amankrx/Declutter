@@ -14,7 +14,7 @@
 use gettextrs::{gettext, LocaleCategory};
 use gtk::{gio, glib};
 
-use libdeclutter::{
+use declutter::{
     config,
     core::{i18n, Application},
 };

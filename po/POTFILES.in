@@ -1,6 +1,6 @@
 data/com.amankrx.Declutter.desktop.in.in
 data/com.amankrx.Declutter.gschema.xml.in
 data/com.amankrx.Declutter.metainfo.xml.in.in
-data/resources/ui/shortcuts.ui
-data/resources/ui/window.ui
+data/resources/ui/shortcuts.blp
+data/resources/ui/window.blp
 src/application.rs
